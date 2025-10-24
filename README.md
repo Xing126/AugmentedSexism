@@ -5,7 +5,7 @@ A repository for augmenting Chinese datasets related to gender discrimination th
 ## Project Structure
 
 - **/data**: Contains original and augmented Chinese gender discrimination datasets.
-- **/models**: Includes the dataset augmentation model that generates new examples based on the original data.
+- **/AugmentedSexism**: Includes the dataset augmentation model that generates new examples based on the original data.
 
 ## Key Features
 
