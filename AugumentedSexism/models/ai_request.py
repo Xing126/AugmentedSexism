@@ -1,3 +1,6 @@
+import os
+
+import numpy as np
 import requests
 import pandas as pd
 import time
@@ -117,7 +120,7 @@ class APIClient:
 
 class ExampleProducer:
     def __init__(self, indices, train_path):
-        self.indices = indices
+        self.indices = np.load(indices)
         self.train_dataset = pd.read_csv(train_path)
 
     def produce_examples(self, rule, index):
@@ -141,12 +144,13 @@ class TextProducer:
 
 
 class TextHandler:
-    def __init__(self, output_path):
+    def __init__(self, output_file):
         self.text = ''
-        try:
-            self._dataset = pd.read_csv(output_path)
-            self.length = len(self._dataset)
-        except FileNotFoundError or AttributeError:
+        self.output_file = output_file
+        if os.path.exists(output_file):
+            self._dataset = pd.read_csv(output_file)
+            self.length = self._dataset.shape[0]
+        else:
             self._dataset = pd.DataFrame(columns=["ID", "text", "sexism", "gender", "hostile", "misogyny", "misandry"])
             self.length = 0
 
@@ -163,9 +167,10 @@ class TextHandler:
     def concat_text(self, labeled_dict, index, text):
         labeled_dict["ID"] = index
         labeled_dict["text"] = text
-        self._dataset = self._dataset.append(labeled_dict)
+        self._dataset = self._dataset._append(labeled_dict)
 
-    def get_dataset(self):
+    def save_dataset(self):
+        self._dataset.to_csv(self.output_file, index=False)
         return self._dataset
 
 
@@ -177,7 +182,7 @@ class AugumentedSexismModel:
                  text_handler: TextHandler,
                  rules:list, start_index=0):
 
-        self.index = start_index
+        self.index = text_handler.length - 1 if text_handler.length > 0 else 0
         self.rules = rules
         self.rules_count = 0
         self.unsuccessful_indexes = []
@@ -195,22 +200,26 @@ class AugumentedSexismModel:
         self.rules_count += 1
         return rule
 
+    def save_dataset(self):
+        self.text_handler.save_dataset()
+        print(self.unsuccessful_indexes)
+
     def main(self):
         total_texts = self.text_producer.length
+        print("需处理的文本数：",total_texts)
         for index in range(total_texts):
+            print(f"正在处理第{index}条文本")
             test_text = self.text_producer.produce_texts(index)
 
             labeled_dict = self.text_handler.LABELED_DICT
-            while True:
-                rule = self.yield_rules()
-                if rule == '':
-                    break
+            rule = self.yield_rules()
+            while rule:
                 examples = self.example_producer.produce_examples(rule, index)
-                labeled_dict = self.api_client.api_quest(rule, test_text, examples)
+                labeled_dict = self.api_client.api_quest(rule, test_text, examples, labeled_dict)
                 if not labeled_dict:
                     self.unsuccessful_indexes.append(index)
                     break
 
-            self.text_handler.concat_text(labeled_dict, index, test_text)
-
-        return self.text_handler.get_dataset()
+                rule = self.yield_rules()
+            else:
+                self.text_handler.concat_text(labeled_dict, index, test_text)

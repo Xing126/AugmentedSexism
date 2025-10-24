@@ -8,7 +8,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 # --------------------------------  CONFIGURATION  -------------------------------- #
-model_dir = f"./BERT-model"
+model_dir = f"./models/BERT-model/"
 text_column = 'text'  # 输入文件的中文列名
 batch_size = 32
 num_labels = 3
@@ -36,7 +36,7 @@ def load_train_data(file_path):
 
 
 
-def dataset_vectorize(train_data_path, output_vector_path):
+def dataset_vectorize(train_data_path, output_vector_file):
     global model_dir
     model_filename = "model.safetensors"
     model_weight_path = os.path.join(model_dir, model_filename)
@@ -84,7 +84,7 @@ def dataset_vectorize(train_data_path, output_vector_path):
     train_vectors = model.generate_text_vector_group(
         texts=train_texts,
         batch_size=batch_size,
-        save_path=output_vector_path
+        save_path=output_vector_file
     )
 
     # 验证向量数量与文本数量一致
@@ -93,7 +93,7 @@ def dataset_vectorize(train_data_path, output_vector_path):
 
     print(f"训练文本向量生成完成！")
     print(f"向量形状: {train_vectors.shape}（行数={len(train_vectors)}，维度={train_vectors.shape[1]}）")
-    print(f"向量已保存至: {output_vector_path}")
+    print(f"向量已保存至: {output_vector_file}")
 
 
 
@@ -103,6 +103,6 @@ def dataset_vectorize(train_data_path, output_vector_path):
 if __name__ == "__main__":
     # ------------------- 配置参数（关键修改：指定具体权重文件） -------------------
     train_data_path = "../data/raw/all_data.csv"
-    output_vector_path = "../../data/processed/train_vectors.npy"
+    output_vector_file = "../../data/processed/train_vectors.npy"
 
-    dataset_vectorize(train_data_path, output_vector_path)
+    dataset_vectorize(train_data_path, output_vector_file)
