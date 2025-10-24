@@ -9,6 +9,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # --------------------------------  CONFIGURATION  -------------------------------- #
 model_dir = f"./BERT-model"
+text_column = 'text'  # 输入文件的中文列名
 batch_size = 32
 num_labels = 3
 
@@ -16,10 +17,11 @@ num_labels = 3
 
 def load_train_data(file_path):
     """加载train.csv数据并清洗，确保每条文本都被处理"""
+    global text_column
+
     with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
         df = pd.read_csv(f)
-    
-    text_column = 'text'  # 请确认train.csv中实际的文本列名
+
     if text_column not in df.columns:
         raise ValueError(f"train.csv必须包含文本列 '{text_column}'")
     
