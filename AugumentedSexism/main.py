@@ -1,16 +1,13 @@
-import os
-
-from openai import api_key
-
 from models.generate_vectors import dataset_vectorize
 from models.generate_indices import generate_indices
 from models.ai_request import *
+from models.topic_modeling import LDAModel
 
 
 # ================= CONFIGURATION =================
-api_url="",
-api_key='',
-model=""
+api_url = ""
+api_key = ''
+model= ""
 
 train_data = "./data/raw/small_data.csv"
 test_data = "./data/raw/test_data.csv"
@@ -22,6 +19,7 @@ indices = "./data/processed/indices.npy"
 rules1 = ["sexism", "gender", "hostile"]
 rules2 = ["sexism", "gender", "hostile", "misogyny", "misandry"]
 augumented_data = "./data/processed/augumented_data.csv"
+topic = "./data/processed/topic.txt"
 
 # 1. generate vectors
 if not os.path.exists(train_vectors):
@@ -42,12 +40,18 @@ if not os.path.exists(indices):
 
 
 # 3. ai_request
-example_producer = ExampleProducer(indices, train_data)
-text_producer = TextProducer(test_data)
-api_client = APIClient(api_key, api_url, model)
-text_handler = TextHandler(augumented_data)
-model = AugumentedSexismModel(example_producer, text_producer, api_client, text_handler,rules=rules1)
-try:
-    model.main()
-except KeyboardInterrupt:
-    model.save_dataset()
+if not os.path.exists(augumented_data):
+    example_producer = ExampleProducer(indices, train_data)
+    text_producer = TextProducer(test_data)
+    api_client = APIClient(api_key, api_url, model)
+    text_handler = TextHandler(augumented_data)
+    model = AugumentedSexismModel(example_producer, text_producer, api_client, text_handler,rules=rules1)
+    try:
+        model.main()
+    except KeyboardInterrupt:
+        model.save_dataset()
+
+
+
+# 4. LDA modeling
+# (Optional) please run "./models/topic_modeling.py" to get topic of dataset

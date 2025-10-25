@@ -7,7 +7,7 @@ import time
 
 
 class APIClient:
-    def __init__(self, api_key, api_url, model):
+    def __init__(self, api_key:str, api_url:str, model:str):
         self.api_key = api_key
         self.api_url = api_url
         self.model = model
@@ -112,6 +112,7 @@ class APIClient:
         _prompt = self._build_prompt(rule, test_text, examples)
         _response = self._call(_prompt)
         if _response:
+            print("标注结果:", _response)
             labeled_dict = self._handle(rule, _response, unlabeled_dict)
             return labeled_dict
         return {}
@@ -122,6 +123,13 @@ class ExampleProducer:
     def __init__(self, indices, train_path):
         self.indices = np.load(indices)
         self.train_dataset = pd.read_csv(train_path)
+
+    def show_examples(self, index):
+        result_5 = self.train_dataset.iloc[self.indices[index]]
+        examples = []
+        for _, row in result_5.iterrows():
+            examples.append(row["text"])
+        return examples
 
     def produce_examples(self, rule, index):
         result_5 = self.train_dataset.iloc[self.indices[index]]
@@ -167,7 +175,7 @@ class TextHandler:
     def concat_text(self, labeled_dict, index, text):
         labeled_dict["ID"] = index
         labeled_dict["text"] = text
-        self._dataset = self._dataset._append(labeled_dict)
+        self._dataset = self._dataset._append(labeled_dict, ignore_index=True)
 
     def save_dataset(self):
         self._dataset.to_csv(self.output_file, index=False)
@@ -207,14 +215,16 @@ class AugumentedSexismModel:
     def main(self):
         total_texts = self.text_producer.length
         print("需处理的文本数：",total_texts)
-        for index in range(total_texts):
-            print(f"正在处理第{index}条文本")
+        for index in range(self.index, total_texts):
+            print(f"正在处理第{index+1}条文本")
             test_text = self.text_producer.produce_texts(index)
-
+            print("目标文本：", test_text)
             labeled_dict = self.text_handler.LABELED_DICT
             rule = self.yield_rules()
+            print("示例文本：", self.example_producer.show_examples(index))
             while rule:
                 examples = self.example_producer.produce_examples(rule, index)
+
                 labeled_dict = self.api_client.api_quest(rule, test_text, examples, labeled_dict)
                 if not labeled_dict:
                     self.unsuccessful_indexes.append(index)
@@ -223,3 +233,7 @@ class AugumentedSexismModel:
                 rule = self.yield_rules()
             else:
                 self.text_handler.concat_text(labeled_dict, index, test_text)
+
+            print()
+
+        self.save_dataset()
