@@ -8,9 +8,9 @@ from models.ai_request import *
 
 
 # ================= CONFIGURATION =================
-api_url="https://ark.cn-beijing.volces.com/api/v3/chat/completions",
-api_key="fb9f6828-c8d7-4f87-a038-6145b078a48b",
-model="doubao-1-5-lite-32k-250115"
+api_url="",
+api_key='',
+model=""
 
 train_data = "./data/raw/small_data.csv"
 test_data = "./data/raw/test_data.csv"
@@ -28,7 +28,6 @@ if not os.path.exists(train_vectors):
     dataset_vectorize(train_data, train_vectors)
 if not os.path.exists(test_vectors):
     dataset_vectorize(test_data, test_vectors)
-
 
 
 # 2. generate indices
