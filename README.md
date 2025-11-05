@@ -1,4 +1,4 @@
-# AugumentedSexism
+# AugmentedSexism
 
 A repository for augmenting Chinese datasets related to gender discrimination through automated methods. This project provides models and tools to expand existing Chinese gender discrimination datasets, leveraging AI APIs to generate new unlabeled examples while maintaining annotation accuracy.
 
